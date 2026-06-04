@@ -58,7 +58,7 @@ A high-fidelity **Retrieval-Augmented Generation (RAG)** system built with FastA
 
 ### 1. Clone/Setup Project
 ```bash
-cd d:\RAG_projects\rag_llm
+cd ContextAI-Retrieval-Augmented-AI-Assistant
 ```
 
 ### 2. Install Dependencies
@@ -286,5 +286,7 @@ Controlled by `hybridWeight`:
 For issues or feature requests, please open an issue in the repository.
 
 ---
+<div align="center">
 
-**Built with ❤️ for the ContextAI RAG Platform**
+**Built with ❤️ by [![@karthi11040](https://img.shields.io/badge/@karthi11040-100000?style=flat&logo=github&logoColor=white)](https://github.com/karthi11040)** 
+</div>
