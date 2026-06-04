@@ -1,0 +1,389 @@
+/* ============================================
+   ContextAI RAG — Enhanced Stylesheet
+   Feature-rich: themes, animations, components
+   ============================================ */
+
+/* --- Base Typography --- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Citation Badges --- */
+.book-citation {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--accent-sky-dim);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    color: var(--accent-sky);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 8px;
+    margin: 0 3px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+.book-citation i {
+    font-size: 10px;
+}
+
+.book-citation:hover {
+    background: rgba(14, 165, 233, 0.22);
+    border-color: var(--accent-sky);
+    transform: translateY(-1.5px);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+}
+
+/* --- Search Result Highlights --- */
+mark {
+    background: rgba(14, 165, 233, 0.35);
+    color: #ffffff;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* --- Message Bubble Content --- */
+.msg-text-content {
+    line-height: 1.7;
+}
+
+.msg-text-content h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.msg-text-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+.msg-text-content ul, .msg-text-content ol {
+    margin-left: 20px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.msg-text-content li {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.msg-text-content p {
+    margin-bottom: 10px;
+}
+
+.msg-text-content p:last-child {
+    margin-bottom: 0;
+}
+
+.msg-text-content blockquote {
+    border-left: 3px solid var(--accent-sky);
+    padding-left: 12px;
+    margin: 12px 0;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.msg-text-content a {
+    color: var(--accent-sky);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.msg-text-content a:hover {
+    color: var(--accent-purple);
+}
+
+.msg-text-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+}
+
+.msg-text-content th,
+.msg-text-content td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+}
+
+.msg-text-content th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.msg-text-content td {
+    color: var(--text-secondary);
+}
+
+/* --- Code Blocks --- */
+.msg-text-content pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 12px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    margin: 14px 0;
+    position: relative;
+}
+
+.msg-text-content pre .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -16px -16px 12px -16px;
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 12px 12px 0 0;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.msg-text-content pre .code-copy-btn {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-tertiary);
+}
+
+.msg-text-content pre .code-copy-btn:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+.msg-text-content code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: var(--accent-rose);
+    border: 1px solid var(--border-color);
+}
+
+.msg-text-content pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    border: none;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* --- Math / LaTeX (if rendered) --- */
+.msg-text-content .katex {
+    font-size: 1.05em;
+}
+
+/* --- Mermaid diagrams --- */
+.msg-text-content .mermaid {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    text-align: center;
+}
+
+/* --- Explorer Result Cards --- */
+.result-card {
+    transition: all 0.2s ease;
+}
+
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--shadow-color);
+}
+
+.result-page-tag {
+    transition: all 0.2s ease;
+}
+
+.result-page-tag:hover {
+    background: var(--accent-sky-dim);
+    color: var(--accent-sky);
+}
+
+/* --- Active Filter Pill --- */
+.active-filter {
+    background: var(--accent-sky-dim) !important;
+    border-color: var(--accent-sky) !important;
+    color: var(--accent-sky) !important;
+}
+
+/* --- Selection colors --- */
+::selection {
+    background: rgba(14, 165, 233, 0.3);
+    color: inherit;
+}
+
+/* --- Focus visible --- */
+*:focus-visible {
+    outline: 2px solid var(--accent-sky);
+    outline-offset: 2px;
+}
+
+/* --- Smooth scroll --- */
+html {
+    scroll-behavior: smooth;
+}
+
+/* --- Loading skeletons --- */
+.skeleton-text {
+    height: 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.skeleton-title {
+    height: 16px;
+    width: 60%;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+/* --- Custom checkbox --- */
+.custom-checkbox {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.custom-checkbox:checked {
+    background: var(--accent-sky);
+    border-color: var(--accent-sky);
+}
+
+.custom-checkbox:checked::after {
+    content: '\2713';
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* --- Range slider styling --- */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-sky);
+    cursor: pointer;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 0 0 2px var(--accent-sky-dim);
+    transition: transform 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-sky);
+    cursor: pointer;
+    border: 2px solid var(--bg-primary);
+    box-shadow: 0 0 0 2px var(--accent-sky-dim);
+}
+
+/* --- Number input --- */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    color: var(--text-tertiary);
+}
+
+/* --- Textarea auto-resize helper --- */
+textarea {
+    field-sizing: content;
+    min-height: 24px;
+}
+
+/* --- Print styles --- */
+@media print {
+    #sidebar-nav,
+    header,
+    .chat-input-wrapper,
+    .reaction-btn,
+    .msg-time {
+        display: none !important;
+    }
+
+    main {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .bubble-assistant {
+        border: 1px solid #ccc !important;
+        break-inside: avoid;
+    }
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* --- High contrast mode support --- */
+@media (prefers-contrast: high) {
+    .bubble-assistant {
+        border-width: 2px;
+    }
+
+    .input-field {
+        border-width: 2px;
+    }
+}

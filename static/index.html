@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG — Academic Document Q&A Platform</title>
+    <meta name="description" content="State-of-the-art Retrieval-Augmented Generation (RAG) system utilizing FAISS dense indexing and OpenRouter LLMs.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Tailwind CSS v4 CDN -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+    <style type="text/css">
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --font-heading: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --color-bg-darker: #0c0f16;
+            --color-bg-dark: #131722;
+            --color-bg-card: rgba(30, 41, 59, 0.4);
+            --color-border-glow: rgba(14, 165, 233, 0.25);
+        }
+
+        /* CSS Variables for theming */
+        :root[data-theme="dark"] {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1a1a25;
+            --bg-elevated: #1e1e2e;
+            --bg-input: #0f0f16;
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b0;
+            --text-tertiary: #6b6b7b;
+            --border-color: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.12);
+            --accent-sky: #0ea5e9;
+            --accent-sky-dim: rgba(14,165,233,0.15);
+            --accent-purple: #a855f7;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --shadow-color: rgba(0,0,0,0.4);
+            --glass-bg: rgba(30,30,46,0.6);
+            --code-bg: #0d0d12;
+        }
+
+        :root[data-theme="light"] {
+            --bg-primary: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f4f4f5;
+            --bg-elevated: #ffffff;
+            --bg-input: #f4f4f5;
+            --text-primary: #18181b;
+            --text-secondary: #52525b;
+            --text-tertiary: #a1a1aa;
+            --border-color: rgba(0,0,0,0.08);
+            --border-hover: rgba(0,0,0,0.15);
+            --accent-sky: #0284c7;
+            --accent-sky-dim: rgba(2,132,199,0.12);
+            --accent-purple: #7c3aed;
+            --accent-emerald: #059669;
+            --accent-amber: #d97706;
+            --accent-rose: #e11d48;
+            --shadow-color: rgba(0,0,0,0.08);
+            --glass-bg: rgba(255,255,255,0.7);
+            --code-bg: #f1f5f9;
+        }
+
+        :root[data-theme="midnight"] {
+            --bg-primary: #020617;
+            --bg-secondary: #0f172a;
+            --bg-tertiary: #1e293b;
+            --bg-elevated: #1e293b;
+            --bg-input: #0f172a;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --border-color: rgba(148,163,184,0.1);
+            --border-hover: rgba(148,163,184,0.2);
+            --accent-sky: #38bdf8;
+            --accent-sky-dim: rgba(56,189,248,0.15);
+            --accent-purple: #c084fc;
+            --accent-emerald: #34d399;
+            --accent-amber: #fbbf24;
+            --accent-rose: #fb7185;
+            --shadow-color: rgba(0,0,0,0.5);
+            --glass-bg: rgba(15,23,42,0.7);
+            --code-bg: #0b1120;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* Scrollbar */
+        .scroller::-webkit-scrollbar { width: 5px; height: 5px; }
+        .scroller::-webkit-scrollbar-track { background: transparent; }
+        .scroller::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 9999px; opacity: 0.3; }
+        .scroller::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes toastSlide {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastSlideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(120%); opacity: 0; }
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes typing-dot {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        .animate-slideIn { animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-fadeIn { animation: fadeIn 0.3s ease forwards; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        /* Glass morphism */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Sidebar */
+        #sidebar-nav {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;
+        }
+        #sidebar-nav.collapsed { width: 72px; }
+        #sidebar-nav.collapsed .sidebar-text { display: none; }
+        #sidebar-nav.collapsed .sidebar-label { display: none; }
+        #sidebar-nav.collapsed .recent-section { display: none; }
+        #sidebar-nav.collapsed .user-block { padding: 8px; justify-content: center; }
+        #sidebar-nav.collapsed .user-block .user-info { display: none; }
+        #sidebar-nav.collapsed .user-block .fa-up-down { display: none; }
+
+        /* Nav buttons */
+        .nav-btn {
+            color: var(--text-tertiary);
+            transition: all 0.2s ease;
+        }
+        .nav-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+        .nav-btn.active {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+            box-shadow: inset 0 0 0 1px var(--border-hover);
+        }
+
+        /* Workspace */
+        main { background: var(--bg-primary); }
+        header {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+        }
+
+        /* Chat bubbles */
+        .bubble-user {
+            background: var(--accent-sky);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+        .bubble-assistant {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px 18px 18px 18px;
+        }
+
+        /* Inputs */
+        .input-field {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            border-color: var(--accent-sky);
+            box-shadow: 0 0 0 3px var(--accent-sky-dim);
+            outline: none;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        .card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 4px 24px var(--shadow-color);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+        .btn-ghost {
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+        .btn-ghost:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            min-width: 280px;
+            max-width: 400px;
+            box-shadow: 0 8px 32px var(--shadow-color);
+            animation: toastSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .toast.toast-out { animation: toastSlideOut 0.3s ease forwards; }
+
+        /* Drag drop zone */
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            transition: all 0.2s ease;
+        }
+        .drop-zone.drag-over {
+            border-color: var(--accent-sky);
+            background: var(--accent-sky-dim);
+        }
+
+        /* Search highlight in chat */
+        .chat-search-highlight {
+            background: var(--accent-amber);
+            color: var(--bg-primary);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        /* Keyboard shortcut modal */
+        .kbd {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        /* Progress bar */
+        .progress-track {
+            background: var(--bg-tertiary);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-sky));
+            border-radius: 999px;
+            transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Status indicators */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: relative;
+        }
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 50%;
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        .status-dot.online { background: var(--accent-emerald); }
+        .status-dot.online::after { border: 1px solid var(--accent-emerald); }
+        .status-dot.busy { background: var(--accent-sky); }
+        .status-dot.busy::after { border: 1px solid var(--accent-sky); }
+        .status-dot.offline { background: var(--accent-amber); }
+
+        /* Tooltip */
+        [data-tooltip] {
+            position: relative;
+        }
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            z-index: 100;
+        }
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Mobile menu */
+        @media (max-width: 768px) {
+            #sidebar-nav {
+                position: fixed;
+                left: 0;
+                top: 0;
+                z-index: 50;
+                transform: translateX(-100%);
+            }
+            #sidebar-nav.mobile-open { transform: translateX(0); }
+            .mobile-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 40;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            .mobile-overlay.active { opacity: 1; pointer-events: auto; }
+        }
+
+        /* Code blocks */
+        pre {
+            background: var(--code-bg) !important;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .hljs { background: transparent !important; }
+
+        /* Citation badges */
+        .citation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--accent-sky-dim);
+            border: 1px solid rgba(14,165,233,0.2);
+            color: var(--accent-sky);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .citation-badge:hover {
+            background: rgba(14,165,233,0.25);
+            transform: translateY(-1px);
+        }
+
+        /* Toggle switch */
+        .toggle {
+            width: 40px;
+            height: 22px;
+            background: var(--bg-tertiary);
+            border-radius: 11px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s ease;
+        }
+        .toggle.active {
+            background: var(--accent-sky);
+            border-color: var(--accent-sky);
+        }
+        .toggle.active::after {
+            transform: translateX(18px);
+            background: white;
+        }
+
+        /* Chat search overlay */
+        .chat-search-overlay {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 20;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 24px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(-8px);
+            pointer-events: none;
+            transition: all 0.2s ease;
+        }
+        .chat-search-overlay.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-elevated) 50%, var(--bg-tertiary) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+        }
+
+        /* Time stamps */
+        .msg-time {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .message-row:hover .msg-time { opacity: 1; }
+
+        /* Reaction buttons */
+        .reaction-btn {
+            opacity: 0;
+            transform: translateY(4px);
+            transition: all 0.2s ease;
+        }
+        .message-row:hover .reaction-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Streaming cursor */
+        .streaming-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: var(--accent-sky);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Tag pills */
+        .tag-pill {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Context menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 8px 32px var(--shadow-color);
+            z-index: 1000;
+            min-width: 180px;
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            transition: all 0.15s ease;
+        }
+        .context-menu.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+        .context-menu-item {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.15s ease;
+        }
+        .context-menu-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        .context-menu-item.danger:hover { color: var(--accent-rose); }
+
+        /* Typing indicator */
+        .typing-indicator .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-tertiary);
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing-dot 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator .dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        /* Quick action chips */
+        .quick-action {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .quick-action:hover {
+            border-color: var(--accent-sky);
+            color: var(--accent-sky);
+            background: var(--accent-sky-dim);
+        }
+
+        /* Page preview popup */
+        .page-preview {
+            position: absolute;
+            z-index: 50;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            width: 320px;
+            box-shadow: 0 8px 32px var(--shadow-color);
+            opacity: 0;
+            transform: translateY(8px) scale(0.96);
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .page-preview.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* Theme preview dots */
+        .theme-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .theme-dot:hover { transform: scale(1.1); }
+        .theme-dot.active { border-color: var(--accent-sky); box-shadow: 0 0 0 3px var(--accent-sky-dim); }
+
+        /* Confetti canvas */
+        #confetti-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen overflow-hidden font-sans antialiased">
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobileSidebar()"></div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Context Menu -->
+    <div id="context-menu" class="context-menu">
+        <div class="context-menu-item" onclick="ctxCopyMessage()"><i class="fa-regular fa-copy w-4"></i> Copy</div>
+        <div class="context-menu-item" onclick="ctxQuoteMessage()"><i class="fa-solid fa-quote-left w-4"></i> Quote</div>
+        <div class="context-menu-item" onclick="ctxRegenerateMessage()"><i class="fa-solid fa-arrows-rotate w-4"></i> Regenerate</div>
+        <div class="border-t border-white/5 my-1"></div>
+        <div class="context-menu-item danger" onclick="ctxDeleteMessage()"><i class="fa-regular fa-trash-can w-4"></i> Delete</div>
+    </div>
+
+    <div id="app-container" class="flex w-full h-full">
+
+        <!-- Sidebar -->
+        <aside id="sidebar-nav" class="shrink-0 flex flex-col gap-4 h-full select-none border-r border-solid p-4 relative z-50">
+
+            <!-- Sidebar Header -->
+            <div class="flex items-center justify-between w-full px-1">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div class="size-9 rounded-xl flex justify-center items-center shadow-lg shrink-0" style="background: linear-gradient(135deg, var(--accent-purple), var(--accent-sky));">
+                        <i class="fa-solid fa-wand-magic-sparkles text-white text-sm"></i>
+                    </div>
+                    <div class="sidebar-text flex flex-col min-w-0">
+                        <span class="font-semibold text-sm leading-5 truncate" style="color: var(--text-primary);">RAG</span>
+                        <span class="text-xs leading-4 truncate" style="color: var(--text-tertiary);">Academic Assistant</span>
+                    </div>
+                </div>
+                <button onclick="toggleSidebar()" class="btn-ghost p-1.5 rounded-lg shrink-0" data-tooltip="Collapse sidebar" id="sidebar-toggle-btn">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+            </div>
+
+            <!-- New Chat -->
+            <button id="btn-new-chat" class="btn-primary flex items-center justify-center gap-2 font-semibold py-2.5 px-4 rounded-xl text-sm w-full cursor-pointer">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span class="sidebar-text">New Chat</span>
+                <span class="sidebar-text kbd ml-auto text-[10px] py-0.5 px-1.5">Ctrl+N</span>
+            </button>
+
+            <!-- Navigation -->
+            <nav id="navigation-tabs" class="flex flex-col gap-1">
+                <button id="tab-btn-chat" class="nav-btn active flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm w-full cursor-pointer" data-tab="chat-view">
+                    <i class="fa-solid fa-message w-4 text-center"></i>
+                    <span class="sidebar-text flex-1 text-left">Chat Assistant</span>
+                </button>
+                <button id="tab-btn-indexer" class="nav-btn flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm w-full cursor-pointer" data-tab="indexer-view">
+                    <i class="fa-solid fa-database w-4 text-center text-xs"></i>
+                    <span class="sidebar-text flex-1 text-left">Document Indexer</span>
+                </button>
+                <button id="tab-btn-explorer" class="nav-btn flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm w-full cursor-pointer" data-tab="explorer-view">
+                    <i class="fa-solid fa-magnifying-glass w-4 text-center text-xs"></i>
+                    <span class="sidebar-text flex-1 text-left">Search Explorer</span>
+                </button>
+                <button id="tab-btn-settings" class="nav-btn flex items-center gap-3 py-2.5 px-3 rounded-xl text-sm w-full cursor-pointer" data-tab="settings-view">
+                    <i class="fa-solid fa-sliders w-4 text-center text-xs"></i>
+                    <span class="sidebar-text flex-1 text-left">API Settings</span>
+                </button>
+            </nav>
+
+            <!-- Recent Chats -->
+            <div class="recent-section flex flex-col flex-1 gap-2 overflow-hidden min-h-0">
+                <div class="flex items-center justify-between px-3">
+                    <span class="sidebar-label font-medium uppercase text-xs leading-4 tracking-wide" style="color: var(--text-tertiary);">Recent</span>
+                    <button onclick="clearAllConversations()" class="text-[10px] hover:text-rose-400 transition cursor-pointer" style="color: var(--text-tertiary);" data-tooltip="Clear all">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
+                <div class="relative flex-1 min-h-0">
+                    <input type="text" id="chat-search-input" placeholder="Search chats..." 
+                        class="w-full text-xs py-1.5 px-3 rounded-lg mb-2 input-field"
+                        oninput="filterConversations(this.value)">
+                    <div id="recent-chats-list" class="flex flex-col gap-0.5 overflow-y-auto scroller pr-1" style="max-height: calc(100% - 32px);">
+                        <div class="text-xs py-3 px-3 text-center" style="color: var(--text-tertiary);">No conversations saved</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme Toggle -->
+            <div class="sidebar-text flex items-center justify-between px-3 py-2 rounded-xl" style="background: var(--bg-tertiary);">
+                <span class="text-xs font-medium" style="color: var(--text-secondary);">Theme</span>
+                <div class="flex gap-2">
+                    <button onclick="setTheme('dark')" class="theme-dot" style="background: #0a0a0f;" data-tooltip="Dark"></button>
+                    <button onclick="setTheme('light')" class="theme-dot" style="background: #fafafa; border: 1px solid #e4e4e7;" data-tooltip="Light"></button>
+                    <button onclick="setTheme('midnight')" class="theme-dot" style="background: #020617;" data-tooltip="Midnight"></button>
+                </div>
+            </div>
+
+            <!-- User Block -->
+            <div class="user-block rounded-xl flex p-2.5 items-center gap-3 mt-auto" style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                <div class="size-9 rounded-full flex items-center justify-center font-bold text-sm shadow shrink-0" style="background: linear-gradient(135deg, var(--accent-purple), var(--accent-sky)); color: white;">
+                    JD
+                </div>
+                <div class="user-info flex flex-col flex-1 min-w-0">
+                    <span class="font-medium text-sm leading-5 truncate" style="color: var(--text-primary);">Jane Doe</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="status-dot online"></span>
+                        <span class="text-xs" style="color: var(--text-tertiary);">Pro Plan</span>
+                    </div>
+                </div>
+                <button onclick="showShortcutsModal()" class="btn-ghost p-1.5 rounded-lg shrink-0" data-tooltip="Keyboard shortcuts">
+                    <i class="fa-solid fa-keyboard text-xs" style="color: var(--text-tertiary);"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex flex-col flex-1 overflow-hidden h-full relative">
+
+            <!-- Header -->
+            <header class="flex px-6 py-3.5 justify-between items-center gap-4 z-10 border-b border-solid">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleMobileSidebar()" class="md:hidden btn-ghost p-2 rounded-lg">
+                        <i class="fa-solid fa-bars text-sm"></i>
+                    </button>
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                            <h1 id="workspace-title" class="font-semibold text-base leading-6" style="color: var(--text-primary);">New Conversation</h1>
+                            <span id="workspace-tag" class="tag-pill hidden" style="background: var(--accent-sky-dim); color: var(--accent-sky);">Academic</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span id="global-status-badge" class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style="background: var(--accent-amber); color: white;">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                <span id="global-status-text">Offline</span>
+                            </span>
+                            <span class="text-xs" style="color: var(--text-tertiary);">·</span>
+                            <span id="active-model-badge" class="text-xs" style="color: var(--text-tertiary);">Gemini 2.5 Flash</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleChatSearch()" class="btn-ghost p-2 rounded-lg" data-tooltip="Search in chat (Ctrl+F)">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </button>
+                    <button id="btn-export-chat" class="btn-ghost flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition hidden" data-tooltip="Export conversation">
+                        <i class="fa-solid fa-arrow-down-to-bracket text-xs"></i>
+                        <span class="hidden sm:inline">Export</span>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleHeaderMenu()" class="btn-ghost p-2 rounded-lg">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                        <div id="header-menu" class="absolute right-0 top-full mt-2 py-2 rounded-xl border shadow-xl hidden min-w-[180px]" style="background: var(--bg-elevated); border-color: var(--border-color);">
+                            <button onclick="renameConversation()" class="w-full text-left px-4 py-2 text-sm hover:bg-white/5 flex items-center gap-2" style="color: var(--text-secondary);">
+                                <i class="fa-solid fa-pen text-xs w-4"></i> Rename
+                            </button>
+                            <button onclick="duplicateConversation()" class="w-full text-left px-4 py-2 text-sm hover:bg-white/5 flex items-center gap-2" style="color: var(--text-secondary);">
+                                <i class="fa-solid fa-clone text-xs w-4"></i> Duplicate
+                            </button>
+                            <div class="border-t my-1" style="border-color: var(--border-color);"></div>
+                            <button onclick="clearCurrentChat()" class="w-full text-left px-4 py-2 text-sm hover:bg-white/5 flex items-center gap-2" style="color: var(--accent-rose);">
+                                <i class="fa-regular fa-trash-can text-xs w-4"></i> Clear Chat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Chat Search Overlay -->
+            <div id="chat-search-overlay" class="chat-search-overlay">
+                <i class="fa-solid fa-magnifying-glass text-xs" style="color: var(--text-tertiary);"></i>
+                <input type="text" id="chat-search-field" placeholder="Search messages..." class="bg-transparent text-sm outline-none w-48" style="color: var(--text-primary);" oninput="searchInChat(this.value)">
+                <span id="chat-search-count" class="text-xs font-mono" style="color: var(--text-tertiary);">0/0</span>
+                <div class="flex gap-1">
+                    <button onclick="chatSearchPrev()" class="btn-ghost p-1 rounded"><i class="fa-solid fa-chevron-up text-xs"></i></button>
+                    <button onclick="chatSearchNext()" class="btn-ghost p-1 rounded"><i class="fa-solid fa-chevron-down text-xs"></i></button>
+                    <button onclick="toggleChatSearch()" class="btn-ghost p-1 rounded"><i class="fa-solid fa-xmark text-xs"></i></button>
+                </div>
+            </div>
+
+            <!-- Global Indexing Banner -->
+            <section id="global-indexing-panel" class="hidden px-6 py-3 z-10 border-b border-solid animate-fadeIn" style="background: linear-gradient(90deg, rgba(14,165,233,0.08), rgba(168,85,247,0.08)); border-color: var(--border-color);">
+                <div class="flex items-center gap-4 max-w-3xl mx-auto">
+                    <div class="relative">
+                        <i class="fa-solid fa-circle-notch fa-spin text-lg" style="color: var(--accent-sky);"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <span id="alert-title-text" class="font-semibold text-xs block mb-1" style="color: var(--text-primary);">Indexing Book: Extracting text...</span>
+                        <div class="progress-track h-1.5 w-full max-w-xl">
+                            <div id="alert-progress-fill" class="progress-fill h-full" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <span id="alert-progress-percentage" class="font-bold text-sm font-mono" style="color: var(--accent-sky);">0%</span>
+                    <button onclick="cancelIndexing()" class="btn-ghost p-1.5 rounded-lg" data-tooltip="Cancel indexing">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- VIEW: Chat -->
+            <div id="chat-view" class="view-panel flex-grow overflow-hidden flex flex-col active">
+                <div id="chat-history-container" class="overflow-y-auto p-6 flex-grow flex flex-col gap-6 scroller relative" style="background: var(--bg-primary);">
+
+                    <!-- Welcome Card -->
+                    <div class="assistant-welcome flex justify-center items-center h-full py-10">
+                        <div class="card rounded-2xl p-8 text-center max-w-lg shadow-xl animate-slideIn" style="background: var(--glass-bg); backdrop-filter: blur(20px);">
+                            <div class="size-16 rounded-2xl mx-auto mb-5 flex items-center justify-center animate-float" style="background: linear-gradient(135deg, var(--accent-purple), var(--accent-sky));">
+                                <i class="fa-solid fa-graduation-cap text-2xl text-white"></i>
+                            </div>
+                            <h2 class="text-lg font-bold mb-2 font-heading" style="color: var(--text-primary);">AI Teaching Assistant</h2>
+                            <p class="text-sm mb-4 leading-relaxed font-medium" style="color: var(--text-secondary);">Connected to <strong>Artificial Intelligence: A Modern Approach (3rd ed.)</strong></p>
+                            <p class="p-4 rounded-xl text-xs leading-relaxed mb-6" style="background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px solid var(--border-color);">
+                                Ask academic questions, explain algorithms, or query specific concepts. Answers include precise page citations.
+                            </p>
+
+                            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                                <button class="quick-action" data-query="Explain what A* Search is and its heuristic requirements.">A* Search & Heuristics</button>
+                                <button class="quick-action" data-query="What does PEAS stand for in Artificial Intelligence? Provide examples.">What is PEAS?</button>
+                                <button class="quick-action" data-query="Define Markov Decision Processes (MDPs) and the Bellman Equation.">MDPs & Bellman</button>
+                                <button class="quick-action" data-query="Explain the difference between supervised and unsupervised learning.">Supervised vs Unsupervised</button>
+                                <button class="quick-action" data-query="What is the Turing Test and its criticisms?">Turing Test</button>
+                            </div>
+
+                            <div class="flex items-center justify-center gap-4 text-[10px]" style="color: var(--text-tertiary);">
+                                <span class="flex items-center gap-1"><i class="fa-solid fa-bolt text-[8px]" style="color: var(--accent-amber);"></i> Real-time retrieval</span>
+                                <span class="flex items-center gap-1"><i class="fa-solid fa-book text-[8px]" style="color: var(--accent-sky);"></i> Page citations</span>
+                                <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved text-[8px]" style="color: var(--accent-emerald);"></i> Academic verified</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="px-6 py-4 border-t border-solid" style="background: var(--bg-primary); border-color: var(--border-color);">
+                    <div class="max-w-3xl mx-auto">
+                        <!-- Quick Actions Bar -->
+                        <div class="flex items-center gap-2 mb-2 overflow-x-auto scroller pb-1" id="quick-actions-bar">
+                            <button onclick="insertQuickAction('Summarize')" class="quick-action"><i class="fa-solid fa-compress text-[10px]"></i> Summarize</button>
+                            <button onclick="insertQuickAction('Explain')" class="quick-action"><i class="fa-solid fa-lightbulb text-[10px]"></i> Explain</button>
+                            <button onclick="insertQuickAction('Compare')" class="quick-action"><i class="fa-solid fa-code-compare text-[10px]"></i> Compare</button>
+                            <button onclick="insertQuickAction('Code')" class="quick-action"><i class="fa-solid fa-code text-[10px]"></i> Code</button>
+                            <button onclick="insertQuickAction('Quiz')" class="quick-action"><i class="fa-solid fa-clipboard-question text-[10px]"></i> Quiz me</button>
+                        </div>
+
+                        <form id="chat-input-form" class="rounded-2xl flex p-2 items-end gap-2 input-field focus-within:border-sky-500">
+                            <button type="button" id="chat-attach-btn" class="shrink-0 p-2.5 rounded-xl transition cursor-pointer btn-ghost" title="Attach file">
+                                <i class="fa-solid fa-paperclip text-sm"></i>
+                            </button>
+
+                            <textarea id="chat-input-textarea" class="resize-none bg-transparent text-sm leading-5 px-1 py-2.5 flex-grow outline-none scroller" 
+                                placeholder="Message  RAG... Ask anything about AI..." rows="1" required
+                                style="color: var(--text-primary); min-height: 24px; max-height: 200px;"></textarea>
+
+                            <button type="button" id="voice-btn" class="shrink-0 p-2.5 rounded-xl transition cursor-pointer btn-ghost" title="Voice input">
+                                <i class="fa-solid fa-microphone text-sm"></i>
+                            </button>
+
+                            <button type="submit" id="chat-send-btn" class="shrink-0 rounded-xl transition duration-200 cursor-pointer w-9 h-9 flex items-center justify-center btn-primary">
+                                <i class="fa-solid fa-arrow-up text-sm"></i>
+                            </button>
+                        </form>
+                        <p class="text-center text-xs leading-4 mt-2 font-medium" style="color: var(--text-tertiary);">
+                            <i class="fa-solid fa-circle-info text-[10px] mr-1"></i> RAG can make mistakes. Consider checking important information.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Document Indexer -->
+            <div id="indexer-view" class="view-panel flex-grow overflow-y-auto p-6 scroller hidden" style="background: var(--bg-primary);">
+                <div class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Upload Card -->
+                    <div class="md:col-span-2 card rounded-2xl p-6 shadow-xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="size-10 rounded-xl flex items-center justify-center" style="background: var(--accent-sky-dim);">
+                                <i class="fa-solid fa-file-arrow-up" style="color: var(--accent-sky);"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-primary);">Upload Documents</h2>
+                                <p class="text-xs" style="color: var(--text-tertiary);">PDF, TXT, DOCX, or MD files up to 25MB</p>
+                            </div>
+                        </div>
+
+                        <div id="drop-zone" class="drop-zone p-8 text-center cursor-pointer" onclick="document.getElementById('document-upload-input').click()">
+                            <input type="file" id="document-upload-input" class="hidden" accept=".pdf,.txt,.docx,.md" multiple>
+                            <div class="size-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background: var(--bg-tertiary);">
+                                <i class="fa-solid fa-cloud-arrow-up text-2xl" style="color: var(--accent-sky);"></i>
+                            </div>
+                            <p class="text-sm font-semibold mb-1" style="color: var(--text-primary);" id="drop-zone-text">Drag & drop files here</p>
+                            <p class="text-xs" style="color: var(--text-tertiary);">or click to browse</p>
+                        </div>
+
+                        <!-- File List -->
+                        <div id="upload-file-list" class="flex flex-col gap-2 mt-4 hidden"></div>
+
+                        <div class="flex items-center justify-end gap-3 mt-4">
+                            <button type="button" id="upload-doc-btn" class="btn-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <i class="fa-solid fa-upload"></i>
+                                <span>Upload and Index</span>
+                            </button>
+                        </div>
+
+                        <div id="upload-status-message" class="hidden mt-4 text-xs font-medium py-3 px-4 rounded-xl border flex items-center gap-2"></div>
+                    </div>
+
+                    <!-- Stats Card -->
+                    <div class="card rounded-2xl p-6 shadow-xl flex flex-col">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="size-10 rounded-xl flex items-center justify-center" style="background: var(--accent-emerald); opacity: 0.15;">
+                                <i class="fa-solid fa-chart-pie" style="color: var(--accent-emerald);"></i>
+                            </div>
+                            <h2 class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-primary);">Index Statistics</h2>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <div class="flex justify-between items-center py-2.5 border-b" style="border-color: var(--border-color);">
+                                <span class="text-sm" style="color: var(--text-secondary);">PDF Status</span>
+                                <span id="idx-stat-pdf" class="text-sm font-semibold flex items-center gap-1.5" style="color: var(--accent-rose);">
+                                    <i class="fa-solid fa-circle-xmark"></i>Missing AI.pdf
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5 border-b" style="border-color: var(--border-color);">
+                                <span class="text-sm" style="color: var(--text-secondary);">Indexing Status</span>
+                                <span id="idx-stat-indexed" class="text-sm font-semibold" style="color: var(--text-tertiary);">Not Indexed</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5 border-b" style="border-color: var(--border-color);">
+                                <span class="text-sm" style="color: var(--text-secondary);">Total Pages</span>
+                                <span id="idx-stat-pages" class="text-sm font-semibold font-mono" style="color: var(--text-primary);">0</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5 border-b" style="border-color: var(--border-color);">
+                                <span class="text-sm" style="color: var(--text-secondary);">Chunks</span>
+                                <span id="idx-stat-chunks" class="text-sm font-semibold font-mono" style="color: var(--text-primary);">0</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5 border-b" style="border-color: var(--border-color);">
+                                <span class="text-sm" style="color: var(--text-secondary);">FAISS Size</span>
+                                <span id="idx-stat-faiss" class="text-sm font-semibold font-mono" style="color: var(--text-primary);">0.00 MB</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2.5">
+                                <span class="text-sm" style="color: var(--text-secondary);">Vocabulary</span>
+                                <span id="idx-stat-vocab" class="text-sm font-semibold font-mono" style="color: var(--text-primary);">0 words</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t my-5" style="border-color: var(--border-color);"></div>
+
+                        <h3 class="text-sm font-bold mb-1" style="color: var(--text-primary);">Start Indexing</h3>
+                        <p class="text-xs mb-4 leading-relaxed" style="color: var(--text-tertiary);">Extract, chunk, embed, and store in FAISS vector database.</p>
+
+                        <form id="indexer-config-form" class="flex flex-col gap-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-xs font-semibold" style="color: var(--text-secondary);">Chunk Size</label>
+                                    <input type="number" id="config-chunk-size" value="1000" min="500" max="3000" step="100" class="input-field px-3 py-2.5 rounded-xl text-sm">
+                                </div>
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-xs font-semibold" style="color: var(--text-secondary);">Overlap</label>
+                                    <input type="number" id="config-chunk-overlap" value="200" min="50" max="1000" step="50" class="input-field px-3 py-2.5 rounded-xl text-sm">
+                                </div>
+                            </div>
+                            <button type="submit" id="start-indexing-btn" class="w-full btn-primary font-bold py-3 px-5 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                                <i class="fa-solid fa-play-circle text-base"></i>
+                                <span>Start Vector Training</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- How It Works -->
+                    <div class="card rounded-2xl p-6 shadow-xl">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="size-10 rounded-xl flex items-center justify-center" style="background: var(--accent-purple); opacity: 0.15;">
+                                <i class="fa-solid fa-graduation-cap" style="color: var(--accent-purple);"></i>
+                            </div>
+                            <h2 class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-primary);">How RAG Works</h2>
+                        </div>
+
+                        <div class="flex flex-col gap-5">
+                            <div class="flex gap-4">
+                                <div class="size-8 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0" style="background: var(--bg-tertiary); color: var(--text-primary);">1</div>
+                                <div>
+                                    <h4 class="text-sm font-semibold mb-0.5" style="color: var(--text-primary);">PDF Text Extraction</h4>
+                                    <p class="text-xs leading-relaxed" style="color: var(--text-tertiary);">PyMuPDF extracts text blocks page-by-page, stripping headers.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="size-8 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0" style="background: var(--bg-tertiary); color: var(--text-primary);">2</div>
+                                <div>
+                                    <h4 class="text-sm font-semibold mb-0.5" style="color: var(--text-primary);">Sliding Window Chunking</h4>
+                                    <p class="text-xs leading-relaxed" style="color: var(--text-tertiary);">Overlapping segments prevent knowledge splits at margins.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="size-8 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0" style="background: var(--bg-tertiary); color: var(--text-primary);">3</div>
+                                <div>
+                                    <h4 class="text-sm font-semibold mb-0.5" style="color: var(--text-primary);">Dense Embeddings</h4>
+                                    <p class="text-xs leading-relaxed" style="color: var(--text-tertiary);">OpenRouter API generates contextual vector representations.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="size-8 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0" style="background: var(--bg-tertiary); color: var(--text-primary);">4</div>
+                                <div>
+                                    <h4 class="text-sm font-semibold mb-0.5" style="color: var(--text-primary);">FAISS Vector Store</h4>
+                                    <p class="text-xs leading-relaxed" style="color: var(--text-tertiary);">Local binary index enables microsecond semantic search.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Search Explorer -->
+            <div id="explorer-view" class="view-panel flex-grow overflow-y-auto p-6 scroller hidden" style="background: var(--bg-primary);">
+                <div class="max-w-3xl mx-auto w-full flex flex-col gap-6">
+
+                    <div class="card rounded-2xl p-6 shadow-xl">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="size-10 rounded-xl flex items-center justify-center" style="background: var(--accent-sky-dim);">
+                                <i class="fa-solid fa-magnifying-glass" style="color: var(--accent-sky);"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-primary);">Vector Context Retrieval</h2>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Test semantic relevance and hybrid search parameters</p>
+                            </div>
+                        </div>
+
+                        <form id="explorer-search-form" class="flex gap-3 mt-4">
+                            <input type="text" id="explorer-search-input" placeholder="Search concepts, algorithms, theorems..." 
+                                class="flex-grow input-field px-4 py-3 rounded-xl text-sm" required>
+                            <button type="submit" id="explorer-search-btn" class="w-12 h-12 btn-primary rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-search text-base"></i>
+                            </button>
+                        </form>
+
+                        <!-- Search Filters -->
+                        <div class="flex items-center gap-2 mt-3 flex-wrap">
+                            <span class="text-xs" style="color: var(--text-tertiary);">Filters:</span>
+                            <button class="quick-action text-[10px] py-1 px-3 active-filter" data-filter="all">All</button>
+                            <button class="quick-action text-[10px] py-1 px-3" data-filter="high-relevance">High Relevance (>80%)</button>
+                            <button class="quick-action text-[10px] py-1 px-3" data-filter="recent">Recent Pages</button>
+                        </div>
+                    </div>
+
+                    <div class="explorer-results-header text-sm font-semibold px-1 hidden" id="results-count-banner">
+                        <span>Retrieved <strong id="results-count-text" class="font-mono" style="color: var(--accent-sky);">0</strong> matches</span>
+                    </div>
+
+                    <div id="explorer-results-grid" class="flex flex-col gap-4">
+                        <div class="text-center py-14" style="color: var(--text-tertiary);">
+                            <i class="fa-solid fa-box-open text-4xl mb-4 opacity-30"></i>
+                            <p class="text-sm">Enter a query to explore the vector index</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: API Settings -->
+            <div id="settings-view" class="view-panel flex-grow overflow-y-auto p-6 scroller hidden" style="background: var(--bg-primary);">
+                <div class="max-w-2xl mx-auto w-full flex flex-col gap-6">
+
+                    <form id="settings-config-form" class="card rounded-2xl p-7 shadow-xl flex flex-col gap-6">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="size-10 rounded-xl flex items-center justify-center" style="background: var(--accent-sky-dim);">
+                                <i class="fa-solid fa-sliders" style="color: var(--accent-sky);"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-primary);">Model & API Parameters</h2>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Configure credentials, models, and retrieval tuning</p>
+                            </div>
+                        </div>
+
+                        <!-- API Key -->
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold flex items-center justify-between" style="color: var(--text-secondary);">
+                                <span>OpenRouter API Key</span>
+                                <a href="https://openrouter.ai" target="_blank" class="text-[10px] hover:underline" style="color: var(--accent-sky);">Get key <i class="fa-solid fa-external-link-alt text-[8px]"></i></a>
+                            </label>
+                            <div class="flex input-field rounded-xl overflow-hidden">
+                                <input type="password" id="settings-api-key" placeholder="sk-or-v1-..." class="flex-grow bg-transparent border-none text-sm outline-none px-4 py-3" style="color: var(--text-primary);" required>
+                                <button type="button" id="toggle-key-visibility" class="px-4 cursor-pointer btn-ghost">
+                                    <i class="fa-solid fa-eye-slash text-sm"></i>
+                                </button>
+                            </div>
+                            <span class="text-[10px]" style="color: var(--text-tertiary);">Stored locally in browser localStorage.</span>
+                        </div>
+
+                        <!-- Models -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold" style="color: var(--text-secondary);">Embedding Model</label>
+                                <select id="settings-embed-model" class="input-field px-3 py-3 rounded-xl text-sm cursor-pointer">
+                                    <option value="openai/text-embedding-3-small">text-embedding-3-small (1536d)</option>
+                                    <option value="google/gemini-embedding-001">gemini-embedding-001 (768d)</option>
+                                </select>
+                                <span class="text-[10px]" style="color: var(--text-tertiary);">Changing requires re-indexing.</span>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold" style="color: var(--text-secondary);">Generation Model</label>
+                                <select id="settings-gen-model" class="input-field px-3 py-3 rounded-xl text-sm cursor-pointer">
+                                    <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Fast)</option>
+                                    <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Smart)</option>
+                                    <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B</option>
+                                    <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Free)</option>
+                                    <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- System Prompt -->
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold flex items-center justify-between" style="color: var(--text-secondary);">
+                                <span>System Prompt</span>
+                                <button type="button" onclick="resetSystemPrompt()" class="text-[10px] hover:underline" style="color: var(--accent-sky);">Reset default</button>
+                            </label>
+                            <textarea id="settings-system-prompt" rows="4" class="input-field px-4 py-3 rounded-xl text-sm scroller resize-y" 
+                                placeholder="Enter custom system instructions...">You are an expert AI teaching assistant with deep knowledge of Stuart Russell and Peter Norvig's 'Artificial Intelligence: A Modern Approach'. Provide accurate, well-cited academic answers.</textarea>
+                        </div>
+
+                        <div class="border-t my-1" style="border-color: var(--border-color);"></div>
+
+                        <h3 class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-primary);">Retrieval & RAG Tuning</h3>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold flex items-center justify-between" style="color: var(--text-secondary);">
+                                    <span>Top-K Chunks</span>
+                                    <span id="lbl-top-k" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono" style="background: var(--bg-tertiary); color: var(--accent-sky);">5</span>
+                                </label>
+                                <input type="range" id="settings-top-k" min="1" max="15" value="5" class="w-full accent-sky-500 cursor-pointer py-2">
+                                <span class="text-[10px]" style="color: var(--text-tertiary);">Context chunks sent to the LLM.</span>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold flex items-center justify-between" style="color: var(--text-secondary);">
+                                    <span>Temperature</span>
+                                    <span id="lbl-temperature" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono" style="background: var(--bg-tertiary); color: var(--accent-sky);">0.5</span>
+                                </label>
+                                <input type="range" id="settings-temperature" min="0.0" max="1.0" step="0.1" value="0.5" class="w-full accent-sky-500 cursor-pointer py-2">
+                                <span class="text-[10px]" style="color: var(--text-tertiary);">Lower = more focused, deterministic.</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold flex items-center justify-between" style="color: var(--text-secondary);">
+                                <span>Hybrid Balance</span>
+                                <span id="lbl-hybrid-weight" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono" style="background: var(--bg-tertiary); color: var(--accent-sky);">0.5</span>
+                            </label>
+                            <div class="flex items-center gap-3 text-[11px] font-medium py-1" style="color: var(--text-tertiary);">
+                                <span class="whitespace-nowrap">Sparse (Keyword)</span>
+                                <input type="range" id="settings-hybrid-weight" min="0.0" max="1.0" step="0.1" value="0.5" class="flex-grow accent-sky-500 cursor-pointer">
+                                <span class="whitespace-nowrap">Dense (Semantic)</span>
+                            </div>
+                        </div>
+
+                        <!-- Advanced toggles -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex items-center justify-between p-3 rounded-xl" style="background: var(--bg-tertiary);">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium" style="color: var(--text-primary);">Streaming Response</span>
+                                    <span class="text-[10px]" style="color: var(--text-tertiary);">Show tokens as they generate</span>
+                                </div>
+                                <div class="toggle active" id="toggle-streaming" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl" style="background: var(--bg-tertiary);">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium" style="color: var(--text-primary);">Auto-Citations</span>
+                                    <span class="text-[10px]" style="color: var(--text-tertiary);">Always show source pages</span>
+                                </div>
+                                <div class="toggle active" id="toggle-citations" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl" style="background: var(--bg-tertiary);">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium" style="color: var(--text-primary);">Sound Effects</span>
+                                    <span class="text-[10px]" style="color: var(--text-tertiary);">Play on message send/receive</span>
+                                </div>
+                                <div class="toggle" id="toggle-sound" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl" style="background: var(--bg-tertiary);">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium" style="color: var(--text-primary);">Confetti</span>
+                                    <span class="text-[10px]" style="color: var(--text-tertiary);">Celebrate on index complete</span>
+                                </div>
+                                <div class="toggle active" id="toggle-confetti" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="save-settings-btn" class="w-full btn-primary font-bold py-3.5 px-5 rounded-xl flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-save text-base"></i>
+                            <span>Save and Test Configuration</span>
+                        </button>
+                    </form>
+
+                    <!-- Danger Zone -->
+                    <div class="card rounded-2xl p-6 shadow-xl border" style="border-color: rgba(244,63,94,0.2);">
+                        <h3 class="text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style="color: var(--accent-rose);">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+                        </h3>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium" style="color: var(--text-primary);">Reset All Settings</p>
+                                    <p class="text-xs" style="color: var(--text-tertiary);">Clear API key, models, and preferences</p>
+                                </div>
+                                <button onclick="resetAllSettings()" class="px-4 py-2 rounded-xl text-sm font-semibold border transition hover:bg-rose-500/10" style="color: var(--accent-rose); border-color: rgba(244,63,94,0.3);">
+                                    Reset
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium" style="color: var(--text-primary);">Clear All Conversations</p>
+                                    <p class="text-xs" style="color: var(--text-tertiary);">Delete all chat history permanently</p>
+                                </div>
+                                <button onclick="clearAllConversations()" class="px-4 py-2 rounded-xl text-sm font-semibold border transition hover:bg-rose-500/10" style="color: var(--accent-rose); border-color: rgba(244,63,94,0.3);">
+                                    Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="fixed inset-0 z-[100] hidden items-center justify-center" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+        <div class="card rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-slideIn">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-bold" style="color: var(--text-primary);">Keyboard Shortcuts</h3>
+                <button onclick="hideShortcutsModal()" class="btn-ghost p-1.5 rounded-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-color);">
+                    <span class="text-sm" style="color: var(--text-secondary);">New Chat</span>
+                    <span class="kbd">Ctrl + N</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-color);">
+                    <span class="text-sm" style="color: var(--text-secondary);">Send Message</span>
+                    <span class="kbd">Enter</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-color);">
+                    <span class="text-sm" style="color: var(--text-secondary);">New Line</span>
+                    <span class="kbd">Shift + Enter</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-color);">
+                    <span class="text-sm" style="color: var(--text-secondary);">Search in Chat</span>
+                    <span class="kbd">Ctrl + F</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-color);">
+                    <span class="text-sm" style="color: var(--text-secondary);">Toggle Sidebar</span>
+                    <span class="kbd">Ctrl + B</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b" style="border-color: var(--border-color);">
+                    <span class="text-sm" style="color: var(--text-secondary);">Focus Input</span>
+                    <span class="kbd">Ctrl + /</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm" style="color: var(--text-secondary);">Export Chat</span>
+                    <span class="kbd">Ctrl + E</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Preview Popup -->
+    <div id="page-preview-popup" class="page-preview">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--accent-sky);">Page Preview</span>
+            <button onclick="hidePagePreview()" class="btn-ghost p-1 rounded"><i class="fa-solid fa-xmark text-xs"></i></button>
+        </div>
+        <div id="page-preview-content" class="text-xs leading-relaxed" style="color: var(--text-secondary);"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
